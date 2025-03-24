@@ -1,10 +1,8 @@
-import numpy as np
-import pandas as pd
-import statsmodels.api as sm
-from statsmodels.tsa.stattools import coint, adfuller
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+import numpy as np
 from scipy import stats
+from statsmodels.tsa.stattools import coint
+from tqdm import tqdm
 
 
 def find_cointegrated_pairs(data):
@@ -78,26 +76,19 @@ def pairs_trade(
     pair_df.columns = ["asset_a", "asset_b"]
 
     # find the rolling window correlation coefficient
-    pair_df["corr"] = (
-        pair_df["asset_a"].rolling(window=window_size).corr(pair_df["asset_b"])
-    )
+    pair_df["corr"] = pair_df["asset_a"].rolling(window=window_size).corr(pair_df["asset_b"])
 
     # find the spread
     pair_df["spread"] = (
-        pair_df["asset_a"] / pair_df["asset_a"].iloc[0]
-        - pair_df["asset_b"] / pair_df["asset_b"].iloc[0]
+        pair_df["asset_a"] / pair_df["asset_a"].iloc[0] - pair_df["asset_b"] / pair_df["asset_b"].iloc[0]
     )
 
     # find the equilibrium spread
-    pair_df["equi_spread"] = (
-        pair_df["spread"].rolling(window=window_size, min_periods=0).mean()
-    )
+    pair_df["equi_spread"] = pair_df["spread"].rolling(window=window_size, min_periods=0).mean()
     pair_df["normalized_spread"] = pair_df["spread"] - pair_df["equi_spread"]
 
     # find the std
-    pair_df["std"] = (
-        pair_df["normalized_spread"].rolling(window=window_size).std() * sigma
-    )
+    pair_df["std"] = pair_df["normalized_spread"].rolling(window=window_size).std() * sigma
     pair_df["neg_std"] = -pair_df["std"]
 
     # find signal
@@ -111,7 +102,6 @@ def pairs_trade(
     pair_return_list = []
 
     for i in range(len(pair_df)):
-
         if i < len(pair_df) - 1:
             # if position is not open, check for crossing points
             if status == 0:
@@ -121,9 +111,7 @@ def pairs_trade(
                     status = 1
                     asset_a_short = pair_df["asset_a"].iloc[i]  # record asset_a price
                     asset_b_long = pair_df["asset_b"].iloc[i]  # record asset_b price
-                    pair_cum_return = pair_cum_return * (
-                        1 - transaction_cost
-                    )  # return after transaction cost
+                    pair_cum_return = pair_cum_return * (1 - transaction_cost)  # return after transaction cost
 
                 # long asset_a, short asset_b
                 elif pair_df["normalized_spread"].iloc[i] < pair_df["neg_std"].iloc[i]:
@@ -132,7 +120,7 @@ def pairs_trade(
                     asset_a_long = pair_df["asset_a"].iloc[i]  # record asset_a price
                     asset_b_short = pair_df["asset_b"].iloc[i]  # record asset_b price
                     pair_cum_return = pair_cum_return * (1 - transaction_cost)
-                    
+
             # if position is open, check for zero crossing points
             elif status == 1:
                 if pair_df["normalized_spread"].iloc[i] < 0:
@@ -141,17 +129,10 @@ def pairs_trade(
                     asset_a_return_on_the_dollar = (
                         asset_a_short / pair_df["asset_a"].iloc[i + 1]
                     )  # positions are closed on the next day to account for bid-ask bounce
-                    asset_b_return_on_the_dollar = (
-                        pair_df["asset_b"].iloc[i + 1] / asset_b_long
-                    )
+                    asset_b_return_on_the_dollar = pair_df["asset_b"].iloc[i + 1] / asset_b_long
 
-                    pair_return = (
-                        0.5 * asset_a_return_on_the_dollar
-                        + 0.5 * asset_b_return_on_the_dollar
-                    )
-                    pair_return = pair_return * (
-                        1 - transaction_cost
-                    )  # return after transaction cost
+                    pair_return = 0.5 * asset_a_return_on_the_dollar + 0.5 * asset_b_return_on_the_dollar
+                    pair_return = pair_return * (1 - transaction_cost)  # return after transaction cost
                     pair_cum_return = pair_cum_return * pair_return
                     pair_return_list.append((pair_return - 1))
 
@@ -160,20 +141,11 @@ def pairs_trade(
                 if pair_df["normalized_spread"].iloc[i] > 0:
                     zero_cross_points.append(i)
                     status = 0
-                    asset_a_return_on_the_dollar = (
-                        pair_df["asset_a"].iloc[i + 1] / asset_a_long
-                    )
-                    asset_b_return_on_the_dollar = (
-                        asset_b_short / pair_df["asset_b"].iloc[i + 1]
-                    )
+                    asset_a_return_on_the_dollar = pair_df["asset_a"].iloc[i + 1] / asset_a_long
+                    asset_b_return_on_the_dollar = asset_b_short / pair_df["asset_b"].iloc[i + 1]
 
-                    pair_return = (
-                        0.5 * asset_a_return_on_the_dollar
-                        + 0.5 * asset_b_return_on_the_dollar
-                    )
-                    pair_return = pair_return * (
-                        1 - transaction_cost
-                    )  # return after transaction cost
+                    pair_return = 0.5 * asset_a_return_on_the_dollar + 0.5 * asset_b_return_on_the_dollar
+                    pair_return = pair_return * (1 - transaction_cost)  # return after transaction cost
                     pair_cum_return = pair_cum_return * pair_return
                     pair_return_list.append((pair_return - 1))
 
@@ -187,13 +159,8 @@ def pairs_trade(
                 )  # positions are closed on the next day to account for bid-ask bounce
                 asset_b_return_on_the_dollar = pair_df["asset_b"].iloc[i] / asset_b_long
 
-                pair_return = (
-                    0.5 * asset_a_return_on_the_dollar
-                    + 0.5 * asset_b_return_on_the_dollar
-                )
-                pair_return = pair_return * (
-                    1 - transaction_cost
-                )  # return after transaction cost
+                pair_return = 0.5 * asset_a_return_on_the_dollar + 0.5 * asset_b_return_on_the_dollar
+                pair_return = pair_return * (1 - transaction_cost)  # return after transaction cost
                 pair_cum_return = pair_cum_return * pair_return
                 pair_return_list.append((pair_return - 1))
 
@@ -201,23 +168,16 @@ def pairs_trade(
                 zero_cross_points.append(i)
                 status = 0
                 asset_a_return_on_the_dollar = pair_df["asset_a"].iloc[i] / asset_a_long
-                asset_b_return_on_the_dollar = (
-                    asset_b_short / pair_df["asset_b"].iloc[i]
-                )
+                asset_b_return_on_the_dollar = asset_b_short / pair_df["asset_b"].iloc[i]
 
-                pair_return = (
-                    0.5 * asset_a_return_on_the_dollar
-                    + 0.5 * asset_b_return_on_the_dollar
-                )
+                pair_return = 0.5 * asset_a_return_on_the_dollar + 0.5 * asset_b_return_on_the_dollar
                 pair_return = pair_return * (
                     1 - transaction_cost
                 )  # return after transaction cost # TODO: Make this more accurate
                 pair_cum_return = pair_cum_return * pair_return
                 pair_return_list.append((pair_return - 1))
 
-        pair_df["pair_cum_return"].iloc[
-            i
-        ] = pair_cum_return  # record the cumulative return for each day
+        pair_df["pair_cum_return"].iloc[i] = pair_cum_return  # record the cumulative return for each day
 
     if plot:
         plt.figure(figsize=figsize)
@@ -315,9 +275,8 @@ def find_distance_pairs(data):
     Returns:
         list: A list of tuples containing the pairs of assets along with their distances.
     """
-    
+
     n = data.shape[1]
-    p_value_matrix = np.ones((n, n))
     keys = data.columns
     pairs = []
     for i in range(n):
@@ -345,7 +304,6 @@ def pairs_trade_with_selection(
     step_size=20,
     number_of_top_pairs=5,
 ):
-
     assert selection_method in [
         "cointegration",
         "distance",
@@ -362,9 +320,7 @@ def pairs_trade_with_selection(
             if len(pairs) == 0:
                 continue
             top_pairs = [(a, b) for a, b, _ in pairs]
-            top_pairs = top_pairs[
-                :number_of_top_pairs
-            ]  # Select top X pairs based on p-value
+            top_pairs = top_pairs[:number_of_top_pairs]  # Select top X pairs based on p-value
 
         elif selection_method == "distance":
             pairs = find_distance_pairs(window_data)
@@ -394,6 +350,7 @@ def pairs_trade_with_selection(
                 returns_list.append(cum_return)
     return returns_list
 
+
 def calculate_stats(list, printing=False):
     """
     Summary:
@@ -411,7 +368,6 @@ def calculate_stats(list, printing=False):
 
     # Calculate basic statistics
     mean_return = np.mean(list)
-    median_return = np.median(list)
     std_return = np.std(list)
     min_return = np.min(list)
     max_return = np.max(list)
@@ -446,6 +402,7 @@ def calculate_stats(list, printing=False):
         "kurtosis_return": float(kurtosis_return),
     }
 
+
 def find_pairs_from_list(list):
     """
     Summary:
@@ -457,10 +414,8 @@ def find_pairs_from_list(list):
     Returns:
         list: A list of tuples, where each tuple contains a pair of elements from the input list.
     """
-    return [
-        (list[i], list[j]) for i in range(len(list)) for j in range(i + 1, len(list))
-    ]
-    
+    return [(list[i], list[j]) for i in range(len(list)) for j in range(i + 1, len(list))]
+
 
 def find_pairs_from_two_lists(list1, list2):
     """
@@ -475,7 +430,7 @@ def find_pairs_from_two_lists(list1, list2):
         list2 (list): The second list of elements.
 
     Returns:
-        list of tuples: A list containing all possible pairs (tuples) 
+        list of tuples: A list containing all possible pairs (tuples)
         formed by taking one element from list1 and one element from list2.
     """
     return [(list1[i], list2[j]) for i in range(len(list1)) for j in range(len(list2))]

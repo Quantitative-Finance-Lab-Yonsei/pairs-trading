@@ -2,7 +2,7 @@ clean: clean-pyc clean-test
 quality: set-style-dep check-quality
 style: set-style-dep set-style
 setup: set-precommit set-style-dep set-test-dep set-git set-dev
-test: set-test-dep set-test
+# test: set-test-dep set-test
 
 
 ##### basic #####

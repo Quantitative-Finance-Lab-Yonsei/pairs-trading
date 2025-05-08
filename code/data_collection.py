@@ -98,7 +98,7 @@ def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
 if __name__ == "__main__":
     commodity_list = ["canola", "corn", "ethanol", "gasoline", "oats", "soybean", "sugarcane", "wheat"]
     start_date = "2015-01-01"
-    end_date = "2025-04-31"
+    end_date = "2025-04-30"
 
     for search in commodity_list:
         try:

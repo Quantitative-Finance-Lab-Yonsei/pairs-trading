@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 import time
 from datetime import datetime, timedelta
 
@@ -7,19 +8,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-
-
-# Configure logging
-logging.basicConfig(
-    filename="data_collection.log",
-    filemode="a",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    # handlers=[
-    #     logging.FileHandler("data_collection.log"),
-    #     logging.StreamHandler()
-    # ]
-)
 
 
 def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -34,8 +22,8 @@ def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
         end_date (str): The end date of the date range in the format 'YYYY-MM-DD'.
     Returns:
         pandas.DataFrame: A DataFrame containing the fetched news articles with the following columns:
-            - 'title': The title of the news article.
             - 'date': The publication date of the news article.
+            - 'title': The title of the news article.
             - 'link': The URL link to the news article.
     Raises:
         Exception: Logs an error message if there is an issue fetching data for a specific date.
@@ -74,9 +62,9 @@ def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
                 link = "https://news.google.com/" + temp[i]["href"][2:]
                 title = temp[i].text
                 date = times[i]["datetime"]
-                data.append((title, date, link))
+                data.append((date, title, link))
 
-            current_data = pd.DataFrame(data, columns=["title", "date", "link"])
+            current_data = pd.DataFrame(data, columns=["date", "title", "link"])
             current_data = current_data.sort_values(by=["date", "title"], ascending=[True, True])
 
             df = pd.concat([df, current_data], ignore_index=True)
@@ -88,7 +76,7 @@ def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
             logging.error(f"Error fetching data for date {current_date}: {e}")
         finally:
             current += timedelta(days=1)
-            time.sleep(1)
+            time.sleep(random.uniform(1, 4))  # Random sleep between 1 and 2 seconds
             pbar.update(1)
 
     logging.info("Data fetching complete.")
@@ -96,7 +84,19 @@ def fetch_news(search: str, start_date: str, end_date: str) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    commodity_list = ["canola", "corn", "ethanol", "gasoline", "oats", "soybean", "sugarcane", "wheat"]
+    # Configure logging
+    logging.basicConfig(
+        filename="data_collection.log",
+        filemode="a",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        # handlers=[
+        #     logging.FileHandler("data_collection.log"),
+        #     logging.StreamHandler()
+        # ]
+    )
+
+    commodity_list = ["wheat"]  # "canola", "corn", "ethanol", "gasoline", "oats", "soybean", "sugarcane",
     start_date = "2015-01-01"
     end_date = "2025-04-30"
 
